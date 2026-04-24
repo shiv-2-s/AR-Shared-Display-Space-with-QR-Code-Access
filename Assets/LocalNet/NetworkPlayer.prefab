@@ -83,7 +83,7 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  model1: {fileID: 3609557248789373687, guid: c267d03c6cbc28845b1558996ebf2824, type: 3}
+  model1: {fileID: 5818710407756578001, guid: 8d37880d1ee857f4d9099dafd5d4aa6a, type: 3}
   model2: {fileID: 4418960734497712295, guid: 8d00cc17ff5c6f84f993724f37891168, type: 3}
   selectedModel: {fileID: 0}
   hasSpawned: 0

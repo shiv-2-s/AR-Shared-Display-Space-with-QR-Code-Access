@@ -22,6 +22,20 @@ public class QRScanner : MonoBehaviour
         reader = new BarcodeReader();
     }
 
+    void Update()
+    {
+        // 🔥 CLIENT: Hide scan UI when connected
+        if (NetworkClient.isConnected && !NetworkServer.active && !hasScanned)
+        {
+            Debug.Log("📱 Client connected → hiding scan UI");
+
+            scanFrame.SetActive(false);
+            statusText.text = "Connected to Host";
+
+            hasScanned = true; // prevent scanning on client
+        }
+    }
+
     void OnEnable()
     {
         cameraManager.frameReceived += OnCameraFrameReceived;
@@ -34,6 +48,9 @@ public class QRScanner : MonoBehaviour
 
     void OnCameraFrameReceived(ARCameraFrameEventArgs args)
     {
+        // 🔥 ONLY HOST scans QR
+        if (!NetworkServer.active) return;
+
         if (hasScanned) return;
 
         if (!cameraManager.TryAcquireLatestCpuImage(out var cpuImage))
@@ -70,42 +87,45 @@ public class QRScanner : MonoBehaviour
         if (result != null)
         {
             hasScanned = true;
-            Debug.Log("Is Server: " + NetworkServer.active);
-            Debug.Log("QR Found: " + result.Text);
+
+            Debug.Log("📷 QR Found: " + result.Text);
+
             statusText.text = "Loaded: " + result.Text;
             scanFrame.SetActive(false);
 
-            // 🔥 FIX: wait until NetworkPlayer (QRModelManager) exists
+            // 🔥 Wait until NetworkPlayer is ready
             StartCoroutine(SetModelWhenReady(result.Text));
         }
     }
 
     // =========================
-    // 🔥 WAIT FOR NETWORK PLAYER
+    // 🔥 WAIT + SET + SEND MODEL
     // =========================
     IEnumerator SetModelWhenReady(string qrText)
     {
         QRModelManager modelManager = null;
+        QRNetworkSync net = null;
 
-        while (modelManager == null)
+        while (modelManager == null || net == null)
         {
-            modelManager = FindObjectOfType<QRModelManager>();
-            Debug.Log("Scanner using: " + modelManager);
-Debug.Log("Scanner ID: " + (modelManager != null ? modelManager.GetInstanceID().ToString() : "NULL"));
-            yield return null; // wait next frame
+            if (NetworkClient.localPlayer != null)
+            {
+                modelManager = NetworkClient.localPlayer.GetComponent<QRModelManager>();
+                net = NetworkClient.localPlayer.GetComponent<QRNetworkSync>();
+            }
+
+            yield return null;
         }
 
-        Debug.Log("✅ QRModelManager found");
+        Debug.Log("✅ NetworkPlayer ready");
 
-        if (NetworkServer.active)
-        {
-            Debug.Log("📡 Setting model on HOST: " + qrText);
-            modelManager.SelectModel(qrText);
-        }
-        else
-        {
-            Debug.Log("⚠️ Not host, skipping model selection");
-        }
+        // 🔥 HOST selects model
+        modelManager.SelectModel(qrText);
+
+        // 🔥 SEND model to client
+        net.SendModelSelection(qrText);
+
+        Debug.Log("📡 Model sent to client: " + qrText);
     }
 
     // =========================
@@ -114,7 +134,18 @@ Debug.Log("Scanner ID: " + (modelManager != null ? modelManager.GetInstanceID().
     public void ResetScanner()
     {
         hasScanned = false;
-        scanFrame.SetActive(true);
-        statusText.text = "Scan QR Code";
+
+        // 🔥 HOST shows scanner
+        if (NetworkServer.active)
+        {
+            scanFrame.SetActive(true);
+            statusText.text = "Scan QR Code";
+        }
+        else
+        {
+            // 🔥 CLIENT stays connected UI
+            scanFrame.SetActive(false);
+            statusText.text = "Connected to Host";
+        }
     }
 }

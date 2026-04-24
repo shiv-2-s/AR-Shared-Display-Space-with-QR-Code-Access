@@ -62,9 +62,8 @@ public class QRModelManager : NetworkBehaviour
     // 🔄 RESET
     // =========================
     public void ResetTracking()
-    {
-        selectedModel = null;
-        selectedModelName = "";
-        hasSpawned = false;
-    }
+{
+    selectedModel = null;
+    hasSpawned = false;
+}
 }

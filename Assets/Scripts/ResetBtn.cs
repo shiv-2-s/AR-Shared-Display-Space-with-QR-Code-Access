@@ -5,37 +5,57 @@ public class UIManager : MonoBehaviour
 {
     private GameObject spawnedObject;
 
-    // 🔗 AR Session (optional if you are using it)
+    // 🔗 References
     public ARSession arSession;
+    public GameObject scanFrame;
 
-    // 🔗 UI Elements
-    public GameObject scanFrame;   // blurred square frame
-    
-    // 🔗 Set spawned object from AR script
+    public QRModelManager modelManager;
+    public QRScanner scanner;
+    public ARObjectInteraction interaction;
+
+    // 🔗 Called when object is placed
     public void SetSpawnedObject(GameObject obj)
     {
         spawnedObject = obj;
 
-        // Hide scan frame when object is placed
         if (scanFrame != null)
         {
             scanFrame.SetActive(false);
         }
     }
 
-    // 🔄 Reset button function
+    // 🔄 FINAL RESET FUNCTION
     public void ResetScene()
     {
-    if (spawnedObject != null)
-    {
-        Destroy(spawnedObject);
-        spawnedObject = null;
-    }
+        Debug.Log("🔄 Reset Started");
 
-    // 👇 SHOW the frame again
-    if (scanFrame != null)
-    {
-        scanFrame.SetActive(true);
-    }
+        // 🔥 1. Clear AR object (safe way)
+        if (interaction != null)
+        {
+            interaction.ClearObject();
+        }
+
+        // 🔥 2. Reset model selection
+        if (modelManager != null)
+        {
+            modelManager.ResetTracking();
+        }
+
+        // 🔥 3. Reset scanner
+        if (scanner != null)
+        {
+            scanner.ResetScanner();
+        }
+
+        // 🔥 4. Clear local reference (optional safety)
+        spawnedObject = null;
+
+        // 🔥 5. Show scan UI
+        if (scanFrame != null)
+        {
+            scanFrame.SetActive(true);
+        }
+
+        Debug.Log("✅ Reset Complete");
     }
 }

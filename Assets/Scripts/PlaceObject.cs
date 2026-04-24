@@ -3,11 +3,24 @@ using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 using System.Collections.Generic;
 using Mirror;
-
+using UnityEngine.UI;
 public class ARObjectInteraction : MonoBehaviour
 {
     [Header("References")]
     public UIManager uiManager;
+
+    public enum RotationMode
+{
+    YAxis,
+    XAxis
+}
+
+
+public Image rotationIcon; // 🔥 assign in inspector
+public Sprite yAxisSprite;
+public Sprite xAxisSprite;
+
+public RotationMode rotationMode = RotationMode.YAxis;
 
     private GameObject spawnedObject;
     private GameObject pivotObject;
@@ -19,6 +32,26 @@ public class ARObjectInteraction : MonoBehaviour
 
     private float initialDistance;
     private Vector3 initialScale;
+
+    public void ToggleRotationMode()
+{
+    if (rotationMode == RotationMode.YAxis)
+    {
+        rotationMode = RotationMode.XAxis;
+        Debug.Log("🔄 Rotation Mode: X");
+
+        if (rotationIcon != null && xAxisSprite != null)
+            rotationIcon.sprite = xAxisSprite;
+    }
+    else
+    {
+        rotationMode = RotationMode.YAxis;
+        Debug.Log("🔄 Rotation Mode: Y");
+
+        if (rotationIcon != null && yAxisSprite != null)
+            rotationIcon.sprite = yAxisSprite;
+    }
+}
 
     void Awake()
     {
@@ -142,12 +175,18 @@ public class ARObjectInteraction : MonoBehaviour
             // 🔹 ROTATE
             Vector2 delta = touch1.deltaPosition + touch2.deltaPosition;
 
-            float rotationSpeed = 0.2f;
+float rotationSpeed = 0.2f;
 
-            float rotX = delta.y * rotationSpeed;
-            float rotY = -delta.x * rotationSpeed;
-
-            pivotObject.transform.Rotate(rotX, rotY, 0, Space.Self);
+if (rotationMode == RotationMode.YAxis)
+{
+    float rotY = -delta.x * rotationSpeed;
+    pivotObject.transform.Rotate(0, rotY, 0, Space.World);
+}
+else if (rotationMode == RotationMode.XAxis)
+{
+    float rotX = delta.y * rotationSpeed;
+    pivotObject.transform.Rotate(rotX, 0, 0, Space.Self);
+}
         }
     }
 
