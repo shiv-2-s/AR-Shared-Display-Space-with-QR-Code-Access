@@ -7,14 +7,17 @@ public class QRNetworkSync : NetworkBehaviour
     [SyncVar] private Quaternion syncedRotation;
     [SyncVar] private Vector3 syncedScale;
 
-    private GameObject syncedObject;
+    private GameObject syncedObject;   // Pivot on both sides
 
-[SyncVar(hook = nameof(OnModelChanged))]
-private string syncedModelName;
+    [SyncVar(hook = nameof(OnModelChanged))]
+    private string syncedModelName;
 
+    // =========================
+    // 🔄 SYNC LOOP
+    // =========================
     void Update()
     {
-        // 🔥 HOST updates values continuously
+        // 🔥 HOST sends live updates
         if (isServer && syncedObject != null)
         {
             syncedPosition = syncedObject.transform.position;
@@ -31,7 +34,9 @@ private string syncedModelName;
         }
     }
 
-    // 🔥 Called when host places object
+    // =========================
+    // 🔥 HOST SEND PLACEMENT
+    // =========================
     public void SendPlacement(GameObject obj)
     {
         if (!isServer) return;
@@ -40,21 +45,32 @@ private string syncedModelName;
 
         string modelName = obj.transform.GetChild(0).name.Replace("(Clone)", "").Trim();
 
-        CmdSpawnObject(obj.transform.position, obj.transform.rotation, modelName);
+        CmdSpawnObject(
+            obj.transform.position,
+            obj.transform.rotation,
+            obj.transform.localScale,
+            modelName
+        );
     }
 
+    // =========================
+    // 🔥 COMMAND
+    // =========================
     [Command]
-    void CmdSpawnObject(Vector3 pos, Quaternion rot, string modelName)
+    void CmdSpawnObject(Vector3 pos, Quaternion rot, Vector3 scale, string modelName)
     {
-        RpcSpawnObject(pos, rot, modelName);
+        RpcSpawnObject(pos, rot, scale, modelName);
     }
 
+    // =========================
+    // 🔥 CLIENT SPAWN (FIXED)
+    // =========================
     [ClientRpc]
-    void RpcSpawnObject(Vector3 pos, Quaternion rot, string modelName)
+    void RpcSpawnObject(Vector3 pos, Quaternion rot, Vector3 scale, string modelName)
     {
-        Debug.Log("🔥 RPC SPAWN RECEIVED");
-
         if (isServer) return;
+
+        Debug.Log("🔥 CLIENT SPAWN RECEIVED");
 
         GameObject prefab = Resources.Load<GameObject>(modelName);
 
@@ -64,34 +80,56 @@ private string syncedModelName;
             return;
         }
 
-        // 🔥 Spawn in front (visibility safe)
-        Camera cam = Camera.main;
-        Vector3 spawnPos = cam.transform.position + cam.transform.forward * 2f;
+        // 🔥 CREATE SAME PIVOT
+        GameObject pivot = new GameObject("Pivot");
+        pivot.transform.position = pos;
+        pivot.transform.rotation = rot;
 
-        syncedObject = Instantiate(prefab, spawnPos, rot);
+        // 🔥 SPAWN MODEL AS CHILD
+        GameObject model = Instantiate(prefab, pivot.transform);
+        model.transform.localPosition = Vector3.zero;
+        model.transform.localRotation = Quaternion.identity;
 
-        Debug.Log("✅ Client object created");
+        // 🔥 CENTER MODEL (VERY IMPORTANT)
+        Renderer[] renderers = model.GetComponentsInChildren<Renderer>();
+
+        if (renderers.Length > 0)
+        {
+            Bounds bounds = renderers[0].bounds;
+            foreach (Renderer r in renderers)
+                bounds.Encapsulate(r.bounds);
+
+            Vector3 localCenter = pivot.transform.InverseTransformPoint(bounds.center);
+            model.transform.localPosition -= localCenter;
+        }
+
+        // 🔥 APPLY SCALE
+        pivot.transform.localScale = scale;
+
+        syncedObject = pivot;
+
+        Debug.Log("✅ Client object perfectly synced");
     }
 
+    // =========================
+    // 🔥 MODEL SYNC
+    // =========================
     void OnModelChanged(string oldModel, string newModel)
-{
-    Debug.Log("📡 Model received on client: " + newModel);
-
-    // 🔥 Get model manager on THIS player
-    QRModelManager modelManager = GetComponent<QRModelManager>();
-
-    if (modelManager != null)
     {
-        modelManager.SelectModel(newModel);
+        QRModelManager modelManager = GetComponent<QRModelManager>();
+
+        if (modelManager != null)
+        {
+            modelManager.SelectModel(newModel);
+        }
     }
-}
 
-public void SendModelSelection(string modelName)
-{
-    if (!isServer) return;
+    public void SendModelSelection(string modelName)
+    {
+        if (!isServer) return;
 
-    syncedModelName = modelName;
-}
+        syncedModelName = modelName;
+    }
 
     public override void OnStartClient()
     {

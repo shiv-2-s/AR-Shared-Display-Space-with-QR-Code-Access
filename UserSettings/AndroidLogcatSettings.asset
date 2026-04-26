@@ -1,9 +1,9 @@
 {
-    "m_SelectedDeviceId": "95185f6e",
+    "m_SelectedDeviceId": "R9ZY706D0SX",
     "m_SelectedProcess": {
-        "deviceId": "95185f6e",
+        "deviceId": "R9ZY706D0SX",
         "name": "com.DefaultCompany.TCERepo",
-        "processId": 27430,
+        "processId": 15560,
         "exited": false
     },
     "m_SelectedPriority": 0,
@@ -615,6 +615,150 @@
             "exited": false
         },
         {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 7643,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 10292,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 17322,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 19061,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 20181,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 21753,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 23977,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 25229,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 26524,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 28497,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 30093,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 3930,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 7150,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 9863,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 12238,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 16616,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 18371,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 19394,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 21197,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 23304,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 25153,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 8810,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 28269,
+            "exited": false
+        },
+        {
+            "deviceId": "95185f6e",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 2017,
+            "exited": false
+        },
+        {
             "deviceId": "c2888a44",
             "name": "com.DefaultCompany.ARSharedDisplay",
             "processId": 8136,
@@ -690,6 +834,30 @@
             "deviceId": "AWCX6R4308002191",
             "name": "com.DefaultCompany.TCERepo",
             "processId": 6959,
+            "exited": false
+        },
+        {
+            "deviceId": "AWCX6R4308002191",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 16615,
+            "exited": false
+        },
+        {
+            "deviceId": "AWCX6R4308002191",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 22469,
+            "exited": false
+        },
+        {
+            "deviceId": "AWCX6R4308002191",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 11908,
+            "exited": false
+        },
+        {
+            "deviceId": "R9ZY706D0SX",
+            "name": "com.DefaultCompany.TCERepo",
+            "processId": 15560,
             "exited": false
         }
     ],

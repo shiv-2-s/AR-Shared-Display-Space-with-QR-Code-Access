@@ -4,23 +4,23 @@ using UnityEngine.XR.ARSubsystems;
 using System.Collections.Generic;
 using Mirror;
 using UnityEngine.UI;
+
 public class ARObjectInteraction : MonoBehaviour
 {
     [Header("References")]
     public UIManager uiManager;
 
     public enum RotationMode
-{
-    YAxis,
-    XAxis
-}
+    {
+        YAxis,
+        XAxis
+    }
 
+    public Image rotationIcon;
+    public Sprite yAxisSprite;
+    public Sprite xAxisSprite;
 
-public Image rotationIcon; // 🔥 assign in inspector
-public Sprite yAxisSprite;
-public Sprite xAxisSprite;
-
-public RotationMode rotationMode = RotationMode.YAxis;
+    public RotationMode rotationMode = RotationMode.YAxis;
 
     private GameObject spawnedObject;
     private GameObject pivotObject;
@@ -33,25 +33,22 @@ public RotationMode rotationMode = RotationMode.YAxis;
     private float initialDistance;
     private Vector3 initialScale;
 
+    // 🔄 ROTATION MODE TOGGLE
     public void ToggleRotationMode()
-{
-    if (rotationMode == RotationMode.YAxis)
     {
-        rotationMode = RotationMode.XAxis;
-        Debug.Log("🔄 Rotation Mode: X");
-
-        if (rotationIcon != null && xAxisSprite != null)
-            rotationIcon.sprite = xAxisSprite;
+        if (rotationMode == RotationMode.YAxis)
+        {
+            rotationMode = RotationMode.XAxis;
+            if (rotationIcon != null && xAxisSprite != null)
+                rotationIcon.sprite = xAxisSprite;
+        }
+        else
+        {
+            rotationMode = RotationMode.YAxis;
+            if (rotationIcon != null && yAxisSprite != null)
+                rotationIcon.sprite = yAxisSprite;
+        }
     }
-    else
-    {
-        rotationMode = RotationMode.YAxis;
-        Debug.Log("🔄 Rotation Mode: Y");
-
-        if (rotationIcon != null && yAxisSprite != null)
-            rotationIcon.sprite = yAxisSprite;
-    }
-}
 
     void Awake()
     {
@@ -64,22 +61,14 @@ public RotationMode rotationMode = RotationMode.YAxis;
         if (Input.touchCount == 0)
             return;
 
-        // 🔥 GET QRModelManager FROM NETWORK PLAYER
         if (NetworkClient.localPlayer == null)
-        {
-            Debug.Log("❌ Local player not ready yet");
             return;
-        }
 
         QRModelManager modelManager = NetworkClient.localPlayer.GetComponent<QRModelManager>();
-
         if (modelManager == null)
-        {
-            Debug.Log("❌ QRModelManager missing on NetworkPlayer");
             return;
-        }
 
-        // ---------- SINGLE FINGER ----------
+        // ---------- SINGLE TOUCH ----------
         if (Input.touchCount == 1)
         {
             Touch touch = Input.GetTouch(0);
@@ -88,44 +77,48 @@ public RotationMode rotationMode = RotationMode.YAxis;
             if (touch.phase == TouchPhase.Began && pivotObject == null)
             {
                 if (modelManager.selectedModel == null)
-                {
-                    Debug.Log("❌ No model selected from QR!");
                     return;
-                }
 
                 if (raycastManager.Raycast(touch.position, hits, TrackableType.PlaneWithinPolygon))
                 {
                     Pose hitPose = hits[0].pose;
-                    Vector3 spawnPosition = hitPose.position + new Vector3(0, 0.05f, 0);
 
-                    // 🔥 CREATE PIVOT
+                    // 🔥 CREATE PIVOT AT PLANE
                     pivotObject = new GameObject("Pivot");
-                    pivotObject.transform.position = spawnPosition;
+                    pivotObject.transform.position = hitPose.position;
+                    pivotObject.transform.rotation = hitPose.rotation;
 
-                    // 🔥 SPAWN MODEL
-                    spawnedObject = Instantiate(
-                        modelManager.selectedModel,
-                        spawnPosition,
-                        hitPose.rotation
-                    );
+                    // 🔥 SPAWN MODEL AS CHILD
+                    spawnedObject = Instantiate(modelManager.selectedModel, pivotObject.transform);
 
-                    // 🔥 SET PARENT
-                    spawnedObject.transform.SetParent(pivotObject.transform);
+                    // 🔥 RESET LOCAL TRANSFORM
+                    spawnedObject.transform.localPosition = Vector3.zero;
+                    spawnedObject.transform.localRotation = Quaternion.identity;
 
-                    // 🔥 CENTER MODEL
-                    CenterObject(spawnedObject);
+                    // 🔥 CALCULATE BOUNDS
+                    Renderer[] renderers = spawnedObject.GetComponentsInChildren<Renderer>();
+                    if (renderers.Length == 0) return;
 
-                    // 🔥 NETWORK SYNC
-                    QRNetworkSync net = NetworkClient.localPlayer.GetComponent<QRNetworkSync>();
-
-                    if (net == null)
+                    Bounds bounds = renderers[0].bounds;
+                    foreach (Renderer r in renderers)
                     {
-                        Debug.Log("❌ QRNetworkSync missing on player");
-                        return;
+                        bounds.Encapsulate(r.bounds);
                     }
 
-                    // 🔥 ONLY HOST SENDS DATA
-                    if (NetworkServer.active)
+                    // 🔥 ALIGN CENTER TO PIVOT
+                    Vector3 localCenter = pivotObject.transform.InverseTransformPoint(bounds.center);
+                    spawnedObject.transform.localPosition -= localCenter;
+
+                    // 🔥 FIX HEIGHT (place on plane)
+                    float bottomY = bounds.min.y;
+                    float pivotY = pivotObject.transform.position.y;
+                    float heightOffset = pivotY - bottomY;
+
+                    spawnedObject.transform.position += new Vector3(0, heightOffset, 0);
+
+                    // 🔥 NETWORK SYNC (HOST ONLY)
+                    QRNetworkSync net = NetworkClient.localPlayer.GetComponent<QRNetworkSync>();
+                    if (net != null && NetworkServer.active)
                     {
                         net.SendPlacement(pivotObject);
                     }
@@ -143,13 +136,12 @@ public RotationMode rotationMode = RotationMode.YAxis;
             {
                 if (raycastManager.Raycast(touch.position, hits, TrackableType.PlaneWithinPolygon))
                 {
-                    Pose hitPose = hits[0].pose;
-                    pivotObject.transform.position = hitPose.position;
+                    pivotObject.transform.position = hits[0].pose.position;
                 }
             }
         }
 
-        // ---------- TWO FINGERS ----------
+        // ---------- TWO TOUCH ----------
         if (Input.touchCount == 2 && pivotObject != null)
         {
             Touch touch1 = Input.GetTouch(0);
@@ -172,45 +164,24 @@ public RotationMode rotationMode = RotationMode.YAxis;
                 }
             }
 
-            // 🔹 ROTATE
+            // 🔹 ROTATE (STRICT AXIS)
             Vector2 delta = touch1.deltaPosition + touch2.deltaPosition;
+            float rotationSpeed = 0.2f;
 
-float rotationSpeed = 0.2f;
-
-if (rotationMode == RotationMode.YAxis)
-{
-    float rotY = -delta.x * rotationSpeed;
-    pivotObject.transform.Rotate(0, rotY, 0, Space.World);
-}
-else if (rotationMode == RotationMode.XAxis)
-{
-    float rotX = delta.y * rotationSpeed;
-    pivotObject.transform.Rotate(rotX, 0, 0, Space.Self);
-}
+            if (rotationMode == RotationMode.YAxis)
+            {
+                float rotY = -delta.x * rotationSpeed;
+                pivotObject.transform.Rotate(0f, rotY, 0f, Space.World);
+            }
+            else
+            {
+                float rotX = delta.y * rotationSpeed;
+                pivotObject.transform.Rotate(rotX, 0f, 0f, Space.World);
+            }
         }
     }
 
-    // 🔥 CENTER MODEL
-    void CenterObject(GameObject obj)
-    {
-        Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
-
-        if (renderers.Length == 0)
-            return;
-
-        Bounds bounds = renderers[0].bounds;
-
-        foreach (Renderer r in renderers)
-        {
-            bounds.Encapsulate(r.bounds);
-        }
-
-        Vector3 center = bounds.center;
-
-        obj.transform.position -= center - pivotObject.transform.position;
-    }
-
-    // 🔥 RESET
+    // 🔄 RESET
     public void ClearObject()
     {
         if (pivotObject != null)
